@@ -1,5 +1,9 @@
 # Microservices Workshop - Shop Example
 
+## Slides
+
+[Workshop Slides](packages/docs/microservices.pdf)
+
 ## Setup
 
 ```
