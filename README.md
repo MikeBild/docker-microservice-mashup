@@ -30,3 +30,7 @@ npm run docker
 - [Frontend](http://frontend.localhost)
 - [GraphQL API](http://graphql.localhost)
 - [CouchDB](http://couchdb.localhost/_utils/)
+
+## more
+
+- [Micro-Frontends](https://github.com/MikeBild/introduction-micro-frontends)
