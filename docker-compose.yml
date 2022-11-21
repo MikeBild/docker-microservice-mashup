@@ -1,0 +1,87 @@
+version: "3.3"
+
+services:
+
+  traefik:
+    image: "traefik:v2.9"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  frontend:
+    build: ./packages/frontend
+    container_name: frontend
+    restart: always
+    environment:
+      - VITE_GRAPHQL_URL=http://graphql.localhost
+    healthcheck:
+      test: "curl -f http://localhost:4000 || exit 1"
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 5s       
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=4000"
+
+  graphql:
+    build: ./packages/graphql
+    container_name: graphql
+    restart: always
+    environment:
+      - DBURL=http://admin:admin@couchdb:5984
+      - TOKEN_SECRET=68084a9361525cae58231f15d1595c4d7855825b3f806bd767126ec08c8614890b0ab11235bf4f0ddbdbb06449e6a554a046ddc0f848338eea280d9238552896
+      - PORT=3000
+    links:
+      - "couchdb:couchdb"
+    ports:
+        - "3000:3000"
+    healthcheck:
+      test: "curl -f http://localhost:3000/healthcheck || exit 1"
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 5s        
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.graphql.rule=Host(`graphql.localhost`)"
+      - "traefik.http.routers.graphql.entrypoints=web"
+      - "traefik.http.services.graphql.loadbalancer.server.port=3000"
+
+  couchdb:
+      image: couchdb
+      container_name: couchdb
+      restart: always
+      ports:
+        - "5984:5984"
+      environment:
+        - COUCHDB_USER=admin
+        - COUCHDB_PASSWORD=admin
+      volumes:
+          - couchdb_data:/opt/couchdb/data
+      healthcheck:
+        test: "curl -f http://localhost:5984 || exit 1"
+        interval: 5s
+        timeout: 10s
+        retries: 3
+        start_period: 5s          
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.couchdb.rule=Host(`couchdb.localhost`)"
+        - "traefik.http.routers.couchdb.entrypoints=web"   
+        - "traefik.http.services.couchdb.loadbalancer.server.port=5984"
+      
+volumes:
+  couchdb_data:
+    driver: local
