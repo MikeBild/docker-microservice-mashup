@@ -30,7 +30,7 @@ const typeDefs = `
     orderAt: String
   }
 
-  type User implements Entity{
+  type User implements Entity {
     id: ID!
     username: String
     token: String
