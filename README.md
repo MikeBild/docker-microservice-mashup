@@ -2,8 +2,8 @@
 
 ## Slides
 
-[Workshop Slides](packages/docs/microservices.pdf)
-[Awesome Microservices](https://github.com/mfornos/awesome-microservices)
+- [Workshop Slides](packages/docs/microservices.pdf)
+- [Awesome Microservices](https://github.com/mfornos/awesome-microservices)
 
 ## Setup
 
