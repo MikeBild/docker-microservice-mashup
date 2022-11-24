@@ -5,6 +5,9 @@ import * as fs from 'fs'
 const app = express();
 app.use(bodyParser.json());
 
+app.get("/", (req, res) => {
+  res.send({ message: "Hello World!" });
+});
 app.get('/produkte/:id', (req, res) => {
   const id = req.params.id;
   if (!fs.existsSync(`./resources/${id}.json`)) {
