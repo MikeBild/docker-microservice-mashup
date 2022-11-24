@@ -64,35 +64,32 @@ const typeDefs = `
   }
 `;
 
-const shoppingsCarts: any = {};
+const besteller: any = {
+  qjpS3mFY: { items: [{ id: '1', produkte: ['a', 'b'], orderAt: new Date().toUTCString() }] },
+};
+
+const produkte: any = {
+  items: [
+    { id: 'a', title: 'A', price: 10.11 },
+    { id: 'b', title: 'A', price: 20.22 },
+  ],
+};
+
+const warenkorb: any = {
+  qjpS3mFY: { producte: ['a', 'b'] },
+};
+
 const resolvers = {
   Order: {
-    products: async (parent: any, args: any, { user }: UserContext) => {
-      const response = await fetch(`${DBURL}/products/_bulk_get`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          docs: parent.productIds?.map((x: any) => ({ id: x })).filter(Boolean),
-        }),
-      });
-      const result = await response.json();
-      const docs = result?.results?.reduce((c: any, n: any) => [...c, ...n.docs], []);
-      return docs?.map((x: any) => ({ ...x.ok, id: x.ok._id }));
+    username: async (parent: any, args: any, { user }: UserContext) => {
+      return user?.username;
     },
+    products: async (parent: any, args: any, { user }: UserContext) => {},
   },
   User: {
     orders: async (parent: any, args: any, { user }: UserContext) => {
-      const response = await fetch(`${DBURL}/orders/_find?include_docs=true`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          selector: {
-            username: { $eq: user?.username },
-          },
-        }),
-      });
-      const result = await response.json();
-      return result?.docs?.map((x: any) => ({ ...x, id: x._id }));
+      const bestellerId = user?.username!;
+      return besteller[bestellerId].items;
     },
   },
   Product: {
@@ -104,74 +101,23 @@ const resolvers = {
     totalCount: async (parent: any, args: any, { user }: UserContext) => {
       return parent?.productIds?.length || 0;
     },
-    totalPrice: async (parent: any, args: any, { user }: UserContext) => {
-      const shoppingCart = shoppingsCarts[user?.username!] || { id: user?.username!, productIds: [] };
-      const response = await fetch(`${DBURL}/products/_bulk_get`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          docs: shoppingCart?.productIds?.map((x: any) => ({ id: x })).filter(Boolean),
-        }),
-      });
-      const result = await response.json();
-      const docs = result?.results?.reduce((c: any, n: any) => [...c, ...n.docs], []);
-      const allProducts = docs?.map((x: any) => ({ ...x.ok, id: x.ok._id }));
-
-      return allProducts?.reduce((c: any, n: any) => c + n.price, 0);
-    },
-    products: async (parent: any, args: any, { user }: UserContext) => {
-      const shoppingCart = shoppingsCarts[user?.username!] || { id: user?.username!, productIds: [] };
-      const response = await fetch(`${DBURL}/products/_all_docs?include_docs=true`);
-      const result = await response.json();
-      const allProducts = result?.rows?.map((x: any) => ({ ...x.doc, id: x.doc._id }));
-
-      return shoppingCart?.productIds?.map((x: string) => allProducts.find((y: any) => x === y.id));
-    },
+    totalPrice: async (parent: any, args: any, { user }: UserContext) => {},
+    products: async (parent: any, args: any, { user }: UserContext) => {},
   },
   Query: {
     me: async (parent: any, args: any, { user }: UserContext) => {
-      const shoppingCart = shoppingsCarts[user?.username!] || { id: user?.username };
-      return { ...user, shoppingCart, id: user?.username };
+      return {
+        ...user,
+      };
     },
     products: async (parent: any, args: any, { user }: UserContext) => {
-      const response = await fetch(`${DBURL}/products/_all_docs?include_docs=true`);
-      const result = await response.json();
-      return result?.rows?.map((x: any) => ({ ...x.doc, id: x.doc._id }));
+      return produkte.items;
     },
   },
   Mutation: {
-    shoppingCartAdd: async (parent: any, { productId }: any, { user }: UserContext) => {
-      const shoppingCart = shoppingsCarts[user?.username!];
-      if (!shoppingCart) shoppingsCarts[user?.username!] = { id: user?.username!, productIds: [] };
-
-      shoppingsCarts[user?.username!].productIds = [...(shoppingsCarts[user?.username!].productIds || []), productId];
-
-      return shoppingsCarts[user?.username!];
-    },
-    shoppingCartTransfer: async (parent: any, { fromId }: any, { user }: UserContext) => {
-      shoppingsCarts[user?.username!] = shoppingsCarts[fromId];
-
-      return {
-        id: user?.username!,
-        ...user,
-        shoppingCart: { ...shoppingsCarts[user?.username!], id: user?.username! },
-      };
-    },
-    shoppingCartCheckout: async (parent: any, args: any, { user }: UserContext) => {
-      const shoppingCart = shoppingsCarts[user?.username!];
-      const response = await fetch(`${DBURL}/orders/${randomUUID()}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: user?.username,
-          productIds: shoppingCart.productIds,
-          orderAt: new Date().toUTCString(),
-        }),
-      });
-      shoppingCart.productIds = null;
-
-      return { ...user, shoppingCart, id: user?.username };
-    },
+    shoppingCartAdd: async (parent: any, { productId }: any, { user }: UserContext) => {},
+    shoppingCartTransfer: async (parent: any, { fromId }: any, { user }: UserContext) => {},
+    shoppingCartCheckout: async (parent: any, args: any, { user }: UserContext) => {},
   },
 };
 
