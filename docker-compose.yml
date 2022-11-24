@@ -101,7 +101,27 @@ services:
         - "traefik.http.routers.mstemplate.rule=Host(`mstemplate.localhost`)"
         - "traefik.http.routers.mstemplate.entrypoints=web"   
         - "traefik.http.services.mstemplate.loadbalancer.server.port=9999"        
-      
+          
+  bestellung1:
+    build: ./packages/bestellung1
+    container_name: bestellung1
+    restart: always
+    ports:
+      - "9998:9998"
+    environment:
+      - PORT=9998
+    healthcheck:
+      test: "curl -f http://localhost:9998 || exit 1"
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bestellung1.rule=Host(`bestellung1.localhost`)"
+      - "traefik.http.routers.bestellung1.entrypoints=web"
+      - "traefik.http.services.bestellung1.loadbalancer.server.port=9998"
+
 volumes:
   couchdb_data:
     driver: local
