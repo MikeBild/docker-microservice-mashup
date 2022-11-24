@@ -59,29 +59,6 @@ services:
       - "traefik.http.routers.graphql.entrypoints=web"
       - "traefik.http.services.graphql.loadbalancer.server.port=3000"
 
-  couchdb:
-    image: couchdb
-    container_name: couchdb
-    restart: always
-    ports:
-      - "5984:5984"
-    environment:
-      - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=admin
-    volumes:
-      - couchdb_data:/opt/couchdb/data
-    healthcheck:
-      test: "curl -f http://localhost:5984 || exit 1"
-      interval: 5s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.couchdb.rule=Host(`couchdb.localhost`)"
-      - "traefik.http.routers.couchdb.entrypoints=web"
-      - "traefik.http.services.couchdb.loadbalancer.server.port=5984"
-
   bestellung2:
     build: ./packages/bestellung2
     container_name: bestellung2
@@ -105,26 +82,6 @@ services:
     volumes:
       - bestellung2_data:/data/
   
-  mstemplate:
-    build: ./packages/ms-template
-    container_name: mstemplate
-    restart: always
-    ports:
-      - "9999:9999"
-    environment:
-      - PORT=9999
-    healthcheck:
-      test: "curl -f http://localhost:9999 || exit 1"
-      interval: 5s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mstemplate.rule=Host(`mstemplate.localhost`)"
-      - "traefik.http.routers.mstemplate.entrypoints=web"
-      - "traefik.http.services.mstemplate.loadbalancer.server.port=9999"
-
   warenkorb:
     build: ./packages/warenkorb
     container_name: warenkorb

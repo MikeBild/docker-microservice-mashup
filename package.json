@@ -5,8 +5,8 @@
     "bootstrap": "lerna bootstrap",
     "format": "lerna run format --stream --parallel",
     "build": "lerna run build --stream --parallel",
-    "serve": "npm run build && docker-compose up -d traefik couchdb && lerna run serve --stream --parallel",
-    "dev": "docker-compose up -d traefik couchdb && lerna run dev --stream --parallel",
+    "serve": "npm run build && docker-compose up -d traefik && lerna run serve --stream --parallel",
+    "dev": "docker-compose up -d traefik && lerna run dev --stream --parallel",
     "docker": "docker-compose up --build --force-recreate"
   },
   "workspaces": [

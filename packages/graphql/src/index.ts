@@ -48,6 +48,7 @@ const typeDefs = `
   type Product implements Entity {
     id: ID!
     title: String
+    description: String    
     price: Float
     imageUrl: String
   }
@@ -64,69 +65,111 @@ const typeDefs = `
   }
 `;
 
-const besteller: any = {
-  qjpS3mFY: { items: [{ id: '1', produkte: ['a', 'b'], orderAt: new Date().toUTCString() }] },
-};
-
-const produkte: any = {
-  items: [
-    { id: 'a', title: 'A', price: 10.11 },
-    { id: 'b', title: 'A', price: 20.22 },
-  ],
-};
-
-const warenkorb: any = {
-  qjpS3mFY: { products: ['a', 'b'] },
-};
-
 const resolvers = {
   Order: {
     username: async (parent: any, args: any, { user }: UserContext) => {
       return user?.username;
     },
     products: async (parent: any, args: any, { user }: UserContext) => {
-      return parent.produkte.map((x: any) => produkte.items.find((y: any) => y.id === x));
+      //TODO: fetch products as bulk
     },
   },
   User: {
     shoppingCart: async (parent: any, args: any, { user }: UserContext) => {
-      const products = warenkorb[user?.username!]?.products.map((x: any) =>
-        produkte.items.find((y: any) => y.id === x)
-      );
-      return { id: user?.username!, products };
+      try {
+        const warenkorb = await tryFetchWarenkorb(user?.username!);
+        return { ...warenkorb };
+      } catch (err) {
+        console.error(err);
+        return null;
+      }
     },
     orders: async (parent: any, args: any, { user }: UserContext) => {
-      const bestellerId = user?.username!;
-      return besteller[bestellerId].items;
+      const result = await fetch(`${process.env.ORDERS_URL}/besteller/${user?.username}`);
+      const bestellung = await result.json();
+      return bestellung.items;
     },
   },
   Product: {
-    imageUrl: async (parent: any, args: any, { origin }: UserContext) => {
-      return `${origin}/images/${parent.id}.jpg`;
+    title: (parent: any) => {
+      return parent.titel;
+    },
+    price: (parent: any) => {
+      return parent.preis;
+    },
+    description: (parent: any) => {
+      return parent.beschreibung;
+    },
+    imageUrl: (parent: any) => {
+      return parent.bild;
     },
   },
   ShoppingCart: {
     totalCount: async (parent: any, args: any, { user }: UserContext) => {
-      return parent?.productIds?.length || 0;
+      return parent?.produkte?.length || 0;
     },
     totalPrice: async (parent: any, args: any, { user }: UserContext) => {
-      return parent.products.reduce((c: number, n: any) => c + n.price, 0);
+      return parent?.produkte?.reduce((c: number, n: any) => c + n.preis, 0.0);
+    },
+    products: (parent: any) => {
+      return parent.produkte;
     },
   },
   Query: {
     me: async (parent: any, args: any, { user }: UserContext) => {
-      return {
-        ...user,
-      };
+      const shoppingCart = await tryFetchWarenkorb(user?.username!);
+      return { ...user, id: user?.username, shoppingCart };
     },
     products: async (parent: any, args: any, { user }: UserContext) => {
-      return produkte.items;
+      const result = await fetch(`${process.env.PRODUCTS_URL}/produkte`);
+      const products = await result.json();
+
+      return products.items.map((x: any) => ({
+        ...x,
+        title: x.titel,
+        price: x.preis,
+        imageUrl: x.bild,
+        description: x.beschreibung,
+      }));
     },
   },
   Mutation: {
-    shoppingCartAdd: async (parent: any, { productId }: any, { user }: UserContext) => {},
-    shoppingCartTransfer: async (parent: any, { fromId }: any, { user }: UserContext) => {},
-    shoppingCartCheckout: async (parent: any, args: any, { user }: UserContext) => {},
+    shoppingCartAdd: async (parent: any, { productId }: any, { user }: UserContext) => {
+      const existingWarenkorb = await tryFetchWarenkorb(user?.username!);
+      await fetch(`${process.env.SHOPPINGCART_URL}/warenkorb/${user?.username}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...existingWarenkorb,
+          produkte: [...existingWarenkorb.produkte.map((x: any) => x.id), productId],
+        }),
+      });
+
+      return await tryFetchWarenkorb(user?.username!);
+    },
+    shoppingCartCheckout: async (parent: any, args: any, { user }: UserContext) => {
+      const warenkorb = await tryFetchWarenkorb(user?.username!);
+      const order = {
+        bestellerId: user?.username,
+        preis: warenkorb.produkte.reduce((c: number, n: any) => c + n.preis, 0.0),
+        produkte: warenkorb.produkte.reduce(
+          (c: any, n: any) => ({
+            ...c,
+            [n.id]: (c[n.id] || 0) + 1,
+          }),
+          {}
+        ),
+      };
+
+      const result = await fetch(`${process.env.ORDERS_URL}/bestellungen`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order),
+      });
+
+      const data = await result.json();
+      return { ...user, ...data };
+    },
   },
 };
 
@@ -182,4 +225,27 @@ async function main() {
       process.exit(0);
     });
   }
+}
+
+async function tryFetchWarenkorb(id: string) {
+  const result = await fetch(`${process.env.SHOPPINGCART_URL}/warenkorb/${id}`);
+  if (result.status !== 200)
+    return {
+      id,
+      produkte: [],
+    };
+
+  const warenkorb = await result.json();
+
+  const produktePromises = warenkorb.produkte
+    .filter((x: string) => parseInt(x))
+    .filter(Boolean)
+    .map(async (x: string) => {
+      const result = await fetch(`${process.env.PRODUCTS_URL}/produkte/${x}`);
+      return await result.json();
+    });
+
+  const produkte = await Promise.all(produktePromises);
+
+  return { ...warenkorb, produkte: produkte.filter(Boolean) };
 }
