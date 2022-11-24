@@ -81,6 +81,26 @@ services:
         - "traefik.http.routers.couchdb.rule=Host(`couchdb.localhost`)"
         - "traefik.http.routers.couchdb.entrypoints=web"   
         - "traefik.http.services.couchdb.loadbalancer.server.port=5984"
+
+  mstemplate:
+      build: ./packages/ms-template
+      container_name: mstemplate
+      restart: always
+      ports:
+        - "9999:9999"
+      environment:
+        - PORT=9999
+      healthcheck:
+        test: "curl -f http://localhost:9999 || exit 1"
+        interval: 5s
+        timeout: 10s
+        retries: 3
+        start_period: 5s          
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.mstemplate.rule=Host(`mstemplate.localhost`)"
+        - "traefik.http.routers.mstemplate.entrypoints=web"   
+        - "traefik.http.services.mstemplate.loadbalancer.server.port=9999"        
       
 volumes:
   couchdb_data:
