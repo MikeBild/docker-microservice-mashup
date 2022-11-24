@@ -82,6 +82,29 @@ services:
         - "traefik.http.routers.couchdb.entrypoints=web"   
         - "traefik.http.services.couchdb.loadbalancer.server.port=5984"
 
+  bestellung2:
+    build: ./packages/bestellung2
+    container_name: bestellung2
+    restart: always
+    environment:
+      - PORT=8000
+      - DATAPATH=/data/
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: "curl -f http://localhost:8000/health || exit 1"
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bestellung2.rule=Host(`bestellung2.localhost`)"
+      - "traefik.http.routers.bestellung2.entrypoints=web"
+      - "traefik.http.services.bestellung2.loadbalancer.server.port=8000"
+    volumes:
+      - bestellung2_data:/data/
+  
   mstemplate:
       build: ./packages/ms-template
       container_name: mstemplate
@@ -126,4 +149,6 @@ services:
       
 volumes:
   couchdb_data:
+    driver: local
+  bestellung2_data:
     driver: local
