@@ -5,13 +5,14 @@ import * as fs from 'fs'
 const app = express();
 app.use(bodyParser.json());
 
-app.get("/", (req, res) => {
-  res.send({ message: "Hello World!" });
+app.get("/health", (req, res) => {
+  res.sendStatus(200);
 });
 app.get('/produkte/:id', (req, res) => {
   const id = req.params.id;
   if (!fs.existsSync(`./resources/${id}.json`)) {
     res.sendStatus(404);
+    return;
   }
   const rawdata = fs.readFileSync(`./resources/${id}.json`, 'utf-8');
   const produkt = JSON.parse(rawdata);
