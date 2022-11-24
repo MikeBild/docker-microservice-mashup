@@ -64,12 +64,12 @@ services:
     container_name: bestellung2
     restart: always
     environment:
-      - PORT=8000
+      - PORT=8001
       - DATAPATH=/data/
     ports:
-      - "8000:8000"
+      - "8001:8001"
     healthcheck:
-      test: "curl -f http://localhost:8000/health || exit 1"
+      test: "curl -f http://localhost:8001/health || exit 1"
       interval: 5s
       timeout: 10s
       retries: 3
@@ -78,7 +78,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.bestellung2.rule=Host(`bestellung2.localhost`)"
       - "traefik.http.routers.bestellung2.entrypoints=web"
-      - "traefik.http.services.bestellung2.loadbalancer.server.port=8000"
+      - "traefik.http.services.bestellung2.loadbalancer.server.port=8001"
     volumes:
       - bestellung2_data:/data/
   
