@@ -26,6 +26,10 @@ app.get("/warenkorb/:id", (req, res) => {
     }
 });
 
+app.get("/", (req, res) => {
+    res.send("Warenkorb service is ready!");
+});
+
 app.listen(process.env.PORT || 4567, () => {
     console.log(`Listen on 4567!`);
 });
