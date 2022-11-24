@@ -6,24 +6,20 @@ import Warenkorb from "./warenkorb";
 const app = express();
 app.use(bodyParser.json());
 
-app.put("/warenkorb/:id", (req, res) => {
+app.put("/warenkorb/:id", async (req, res) => {
 
     const warenkorb: Warenkorb = {
         id: req.params["id"],
         produkte: req.body["produkte"],
         zeitStempel: new Date()
     }
-    writeWarenkorbFile(warenkorb);
-    res.send(JSON.stringify(warenkorb));
+    const result = await writeWarenkorbFile(warenkorb);
+    res.send(result);
 });
 
-app.get("/warenkorb/:id", (req, res) => {
-    try {
-        const warenkorb = getWarenkorbFile(req.params["id"]);
-        res.send(warenkorb);
-    } catch(err) {
-        res.status(404).send({"message": "Warenkorb nicht gefunden."});
-    }
+app.get("/warenkorb/:id", async (req, res) => {
+    const warenkorb = await getWarenkorbFile(req.params["id"]);
+    res.send(warenkorb);
 });
 
 app.get("/", (req, res) => {
