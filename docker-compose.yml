@@ -110,12 +110,17 @@ services:
       - "4567:4567"
     environment:
       - PORT=4567
+    healthcheck:
+      test: "curl -f http://localhost:4567 || exit 1"
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.warenkorb.rule=Host(`warenkorb.localhost`)"
       - "traefik.http.routers.warenkorb.entrypoints=web"
-      - "traefik.http.services.warenkorb.loadbalancer.server.port=9999"
-
+      - "traefik.http.services.warenkorb.loadbalancer.server.port=4567"
 
 
 volumes:
