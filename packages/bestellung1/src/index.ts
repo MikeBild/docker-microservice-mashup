@@ -1,6 +1,8 @@
 import express, {Request} from "express";
 import bodyParser from "body-parser";
 import {randomUUID} from "crypto";
+import { readFile, writeFile } from "fs/promises";
+import { readFileSync } from "fs";
 
 const app = express();
 app.use(bodyParser.json());
@@ -23,7 +25,12 @@ interface Bestellungen {
   [bestellerId: BestellerId]: Bestellung[];
 }
 
-const bestellungen: Bestellungen = {};
+const databasePath = './localdb.json';
+
+let bestellungen: Bestellungen = JSON.parse(readFileSync(databasePath, {encoding: 'utf-8', flag: 'r'}));
+setInterval(async() => {
+  bestellungen = JSON.parse(await readFile(databasePath, {encoding: 'utf-8'}));
+}, 10000);
 
 app.get("/besteller/:id", (req, res) => {
   const bestellerId = req.params['id'];
@@ -44,13 +51,16 @@ const newBestellnummer = () => {
   return randomUUID();
 }
 
-app.post("/bestellungen", (req: Request<BestellungRequest>, res) => {
+app.post("/bestellungen", async (req: Request<BestellungRequest>, res) => {
   const bestellungRequest: BestellungRequest = req.body;
   const bestellung: Bestellung = {...bestellungRequest, bestellnummer: newBestellnummer(), zeitStempel: new Date()};
-  if (!(bestellung.bestellerId in bestellungen)) {
-    bestellungen[bestellung.bestellerId] = []
+  const newDBState = {...bestellungen};
+  if (!(bestellung.bestellerId in newDBState)) {
+    newDBState[bestellung.bestellerId] = []
   }
-  bestellungen[bestellung.bestellerId].push(bestellung);
+  newDBState[bestellung.bestellerId].push(bestellung);
+  await writeFile(databasePath, JSON.stringify(newDBState), 'utf-8');
+
   res.send(bestellung);
 });
 
