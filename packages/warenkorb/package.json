@@ -2,7 +2,7 @@
   "name": "warenkorb",
   "private": true,
   "version": "1.0.0",
-  "description": "Microservice Template",
+  "description": "Warenkorb service",
   "scripts": {
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
