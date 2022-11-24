@@ -6,7 +6,8 @@ import {readFileSync, writeFile} from "fs";
 const app = express();
 app.use(bodyParser.json());
 
-const FILENAME = "/data/data.json"
+const dataPath = process.env.DATAPATH || "./";
+const dataFile = dataPath + "data.json"
 const bestellungenRepository: Bestellung[] = read();
 
 app.get("/health", (req, res) => {
@@ -39,13 +40,13 @@ app.get("/besteller/:bestellerId", (req, res) => {
 
 function write(bestellungen: Bestellung[]) {
   const data = JSON.stringify(bestellungen);
-  writeFile(FILENAME, data,
+  writeFile(dataFile, data,
           err => {if (err) console.error(err)});
 }
 
 function read(): Bestellung[] {
   try {
-    const data = readFileSync(FILENAME, "utf-8");
+    const data = readFileSync(dataFile, "utf-8");
     return JSON.parse(data);
   } catch (err) {
     return [];
