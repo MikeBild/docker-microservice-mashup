@@ -4,5 +4,5 @@ WORKDIR /app
 COPY . /app
 RUN npm install
 RUN npm run build
-EXPOSE 9999
+EXPOSE 4567
 CMD ["npm", "run", "serve"]
