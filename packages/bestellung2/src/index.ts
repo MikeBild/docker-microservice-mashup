@@ -9,6 +9,10 @@ app.use(bodyParser.json());
 const FILENAME = "/data/data.json"
 const bestellungenRepository: Bestellung[] = read();
 
+app.get("/health", (req, res) => {
+  res.send("OK");
+});
+
 app.post("/bestellungen", (req, res) => {
   const bestellungRequest = req.body as BestellungRequest;
   const bestellungComplete: Bestellung = {
