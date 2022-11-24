@@ -100,7 +100,29 @@ services:
         - "traefik.enable=true"
         - "traefik.http.routers.mstemplate.rule=Host(`mstemplate.localhost`)"
         - "traefik.http.routers.mstemplate.entrypoints=web"   
-        - "traefik.http.services.mstemplate.loadbalancer.server.port=9999"        
+        - "traefik.http.services.mstemplate.loadbalancer.server.port=9999"    
+
+  produkte:
+      build: ./packages/produkte
+      container_name: produkte
+      restart: always
+      ports:
+        - "7777:7777"
+      environment:
+        - PORT=7777
+      healthcheck:
+        test: "curl -f http://localhost:7777/health || exit 1"
+        interval: 5s
+        timeout: 10s
+        retries: 3
+        start_period: 5s      
+      volumes:
+          - ./packages/produkte/resources:/app/resources    
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.produkte.rule=Host(`produkte.localhost`)"
+        - "traefik.http.routers.produkte.entrypoints=web"   
+        - "traefik.http.services.produkte.loadbalancer.server.port=7777"        
       
 volumes:
   couchdb_data:
