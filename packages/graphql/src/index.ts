@@ -107,7 +107,6 @@ const resolvers = {
   },
   ShoppingCart: {
     totalCount: async (parent: any, args: any, { user }: UserContext) => {
-      console.log({ parent });
       return parent?.productIds?.length || 0;
     },
     totalPrice: async (parent: any, args: any, { user }: UserContext) => {
