@@ -76,7 +76,7 @@ const produkte: any = {
 };
 
 const warenkorb: any = {
-  qjpS3mFY: { producte: ['a', 'b'] },
+  qjpS3mFY: { products: ['a', 'b'] },
 };
 
 const resolvers = {
@@ -84,9 +84,17 @@ const resolvers = {
     username: async (parent: any, args: any, { user }: UserContext) => {
       return user?.username;
     },
-    products: async (parent: any, args: any, { user }: UserContext) => {},
+    products: async (parent: any, args: any, { user }: UserContext) => {
+      return parent.produkte.map((x: any) => produkte.items.find((y: any) => y.id === x));
+    },
   },
   User: {
+    shoppingCart: async (parent: any, args: any, { user }: UserContext) => {
+      const products = warenkorb[user?.username!]?.products.map((x: any) =>
+        produkte.items.find((y: any) => y.id === x)
+      );
+      return { id: user?.username!, products };
+    },
     orders: async (parent: any, args: any, { user }: UserContext) => {
       const bestellerId = user?.username!;
       return besteller[bestellerId].items;
@@ -99,10 +107,12 @@ const resolvers = {
   },
   ShoppingCart: {
     totalCount: async (parent: any, args: any, { user }: UserContext) => {
+      console.log({ parent });
       return parent?.productIds?.length || 0;
     },
-    totalPrice: async (parent: any, args: any, { user }: UserContext) => {},
-    products: async (parent: any, args: any, { user }: UserContext) => {},
+    totalPrice: async (parent: any, args: any, { user }: UserContext) => {
+      return parent.products.reduce((c: number, n: any) => c + n.price, 0);
+    },
   },
   Query: {
     me: async (parent: any, args: any, { user }: UserContext) => {
